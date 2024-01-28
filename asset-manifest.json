@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/BengtssonAnders/math.git/static/css/main.89ab02dd.css",
-    "main.js": "/BengtssonAnders/math.git/static/js/main.db04d997.js",
-    "static/js/787.748ed9dc.chunk.js": "/BengtssonAnders/math.git/static/js/787.748ed9dc.chunk.js",
-    "index.html": "/BengtssonAnders/math.git/index.html",
-    "main.89ab02dd.css.map": "/BengtssonAnders/math.git/static/css/main.89ab02dd.css.map",
-    "main.db04d997.js.map": "/BengtssonAnders/math.git/static/js/main.db04d997.js.map",
-    "787.748ed9dc.chunk.js.map": "/BengtssonAnders/math.git/static/js/787.748ed9dc.chunk.js.map"
+    "main.css": "/math/static/css/main.89ab02dd.css",
+    "main.js": "/math/static/js/main.3726dd6c.js",
+    "static/js/787.748ed9dc.chunk.js": "/math/static/js/787.748ed9dc.chunk.js",
+    "index.html": "/math/index.html",
+    "main.89ab02dd.css.map": "/math/static/css/main.89ab02dd.css.map",
+    "main.3726dd6c.js.map": "/math/static/js/main.3726dd6c.js.map",
+    "787.748ed9dc.chunk.js.map": "/math/static/js/787.748ed9dc.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.89ab02dd.css",
-    "static/js/main.db04d997.js"
+    "static/js/main.3726dd6c.js"
   ]
 }
