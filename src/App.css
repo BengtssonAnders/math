@@ -37,8 +37,8 @@ button:hover {
 }
 
 .question {
-  margin: 20px 0;
-  font-size: 22px;
+  margin: 0px 0;
+  font-size: 144px;
 }
 
 @media (max-width: 768px) {

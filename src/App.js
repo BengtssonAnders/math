@@ -1,89 +1,93 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
 
-function generateQuestions() {
+function generateQuestions(numQuestions) {
   const tables = [4, 6, 7, 8, 9];
   const exclude = [0, 1, 2, 3, 5, 10];
   let questions = [];
 
-  tables.forEach((table) => {
-    for (let i = 1; i <= 10; i++) {
-      if (!exclude.includes(i)) {
-        questions.push({ factor1: table, factor2: i, answer: table * i });
-      }
+  while (questions.length < numQuestions) {
+    const table = tables[Math.floor(Math.random() * tables.length)];
+    let factor2 = Math.floor(Math.random() * 10) + 1;
+    if (!exclude.includes(factor2)) {
+      questions.push({ factor1: table, factor2, answer: table * factor2 });
     }
-  });
+  }
 
   return questions;
 }
 
 function App() {
-  const [testLength, setTestLength] = useState(5); // Standardlängd på testet är 5 minuter
-  const [remainingTime, setRemainingTime] = useState(testLength * 60);
+  const [testLength, setTestLength] = useState(5);
+  const [remainingTime, setRemainingTime] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState({});
   const [userAnswer, setUserAnswer] = useState("");
   const [result, setResult] = useState(0);
   const [answeredQuestions, setAnsweredQuestions] = useState(0);
-  const [questions, setQuestions] = useState(generateQuestions());
+  const [questions, setQuestions] = useState([]);
   const [testStarted, setTestStarted] = useState(false);
 
   useEffect(() => {
-    if (testStarted) {
-      const timer = setInterval(() => {
-        setRemainingTime((prevTime) => {
-          if (prevTime > 0) return prevTime - 1;
-          clearInterval(timer);
-          return 0;
-        });
-      }, 1000);
+    // Kontrollera om testet är igång och antingen tiden är slut eller alla frågor har besvarats.
+    if (
+      testStarted &&
+      (remainingTime === 0 || answeredQuestions === questions.length)
+    ) {
+      setTestStarted(false); // Stoppa testet.
 
-      setCurrentQuestion(
-        questions[Math.floor(Math.random() * questions.length)]
-      );
-
-      return () => clearInterval(timer);
+      // Säkerställ att detta bara körs om testet faktiskt har startat och frågor har besvarats.
+      if (answeredQuestions > 0) {
+        alert(`Testet är över! Du fick ${result} av ${questions.length} rätt.`);
+      }
     }
-  }, [testStarted, questions]);
-
-  const nextQuestion = () => {
-    if (parseInt(userAnswer) === currentQuestion.answer) {
-      setResult((prevResult) => prevResult + 1);
-    }
-    setUserAnswer("");
-    setAnsweredQuestions((prevCount) => prevCount + 1);
-
-    let newQuestions = questions.filter((q) => q !== currentQuestion);
-    setCurrentQuestion(
-      newQuestions[Math.floor(Math.random() * newQuestions.length)]
-    );
-    setQuestions(newQuestions);
-  };
+  }, [testStarted, remainingTime, answeredQuestions, questions.length, result]);
 
   const handleTimeSelection = (minutes) => {
+    const questionsPerMinute = { 5: 30, 10: 60, 15: 90, 20: 120 };
+    const numQuestions = questionsPerMinute[minutes];
     setTestLength(minutes);
     setRemainingTime(minutes * 60);
+    setQuestions(generateQuestions(numQuestions));
+    setCurrentQuestion({});
+    setResult(0);
+    setAnsweredQuestions(0);
+    setUserAnswer("");
   };
 
   const startTest = () => {
     setTestStarted(true);
-    setRemainingTime(testLength * 60);
-    setResult(0);
-    setAnsweredQuestions(0);
-    setQuestions(generateQuestions());
-    setUserAnswer("");
+    if (!questions.length) {
+      setQuestions(generateQuestions(testLength * 6));
+    }
+    moveToNextQuestion();
   };
 
-  const resetTest = () => {
-    setTestStarted(false);
-    setRemainingTime(testLength * 60); // Återställ tid baserat på vald testlängd
-    setResult(0);
-    setAnsweredQuestions(0);
-    setQuestions(generateQuestions()); // Generera frågorna på nytt
+  const moveToNextQuestion = () => {
+    if (questions.length > 0 && answeredQuestions < questions.length) {
+      setCurrentQuestion(questions[answeredQuestions]);
+    }
+  };
+
+  const nextQuestion = () => {
+    if (parseInt(userAnswer, 10) === currentQuestion.answer) {
+      setResult(result + 1);
+    }
+    setAnsweredQuestions(answeredQuestions + 1);
     setUserAnswer("");
+    moveToNextQuestion();
   };
 
   const handleAnswerClick = (number) => {
     setUserAnswer(userAnswer + number.toString());
+  };
+
+  const resetTest = () => {
+    setTestStarted(false);
+    setRemainingTime(testLength * 60);
+    setResult(0);
+    setAnsweredQuestions(0);
+    setUserAnswer("");
+    setQuestions(generateQuestions(testLength * 6));
   };
 
   const buttonStyle = {
@@ -91,21 +95,11 @@ function App() {
     border: "none",
     borderRadius: "5px",
     color: "white",
-    padding: "10px 20px",
-    margin: "5px",
+    padding: "15px 30px",
+    margin: "10px",
     cursor: "pointer",
-    fontSize: "16px",
+    fontSize: "20px",
   };
-
-  // Skapa sifferknappar
-  const numberButtons = [];
-  for (let i = 0; i <= 9; i++) {
-    numberButtons.push(
-      <button style={buttonStyle} key={i} onClick={() => handleAnswerClick(i)}>
-        {i}
-      </button>
-    );
-  }
 
   return (
     <div>
@@ -115,8 +109,8 @@ function App() {
           <h2>Välj testlängd</h2>
           {[5, 10, 15, 20].map((minutes) => (
             <button
-              style={buttonStyle}
               key={minutes}
+              style={buttonStyle}
               onClick={() => handleTimeSelection(minutes)}
             >
               {minutes} minuter
@@ -124,16 +118,6 @@ function App() {
           ))}
           <button style={buttonStyle} onClick={startTest}>
             Starta testet
-          </button>
-        </div>
-      ) : remainingTime <= 0 ? (
-        <div>
-          <p>
-            Testet avslutat! Du svarade på {answeredQuestions} frågor och fick{" "}
-            {result} rätt.
-          </p>
-          <button style={buttonStyle} onClick={resetTest}>
-            Starta om
           </button>
         </div>
       ) : (
@@ -146,16 +130,25 @@ function App() {
             Fråga: {answeredQuestions + 1} av {questions.length}
           </p>
           <p>Rätt svar: {result}</p>
-          <div>
-            <p className="question">
-              Vad är {currentQuestion.factor1} * {currentQuestion.factor2}?
-            </p>
-            <p>Svar: {userAnswer}</p>
-            {numberButtons}
-            <button style={buttonStyle} onClick={nextQuestion}>
-              Nästa fråga
-            </button>
+          <div className="question">
+            {currentQuestion.factor1} * {currentQuestion.factor2}
           </div>
+          <p>Svar: {userAnswer}</p>
+          {[...Array(10).keys()].map((number) => (
+            <button
+              key={number}
+              style={buttonStyle}
+              onClick={() => handleAnswerClick(number)}
+            >
+              {number}
+            </button>
+          ))}
+          <button style={buttonStyle} onClick={nextQuestion}>
+            Nästa fråga
+          </button>
+          <button style={buttonStyle} onClick={resetTest}>
+            Starta om
+          </button>
         </div>
       )}
     </div>
