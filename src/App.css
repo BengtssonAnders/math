@@ -41,6 +41,25 @@ button:hover {
   font-size: 144px;
 }
 
+.header {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 20px;
+}
+
+.resetButton {
+  margin-right: 20px;
+  margin-top: 20px;
+}
+
+/* App.css */
+.selectedButton {
+  border: 2px solid #4CAF50; /* Grön ram */
+  background-color: #A5D6A7; /* Ljusgrön bakgrund */
+}
+
+
 @media (max-width: 768px) {
   body {
     font-size: 16px; /* Större basfontstorlek för bättre läsbarhet */
@@ -59,4 +78,5 @@ button:hover {
   h1 {
     margin-top: 20px; /* Ge lite mer utrymme överst */
   }
+
 }

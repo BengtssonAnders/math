@@ -18,53 +18,52 @@ function generateQuestions(numQuestions) {
 }
 
 function App() {
-  const [testLength, setTestLength] = useState(5);
-  const [remainingTime, setRemainingTime] = useState(0);
+  const [testLength, setTestLength] = useState(null);
+  const [remainingTime, setRemainingTime] = useState(0); // Behålls för att hantera kvarvarande tid
+
   const [currentQuestion, setCurrentQuestion] = useState({});
   const [userAnswer, setUserAnswer] = useState("");
   const [result, setResult] = useState(0);
   const [answeredQuestions, setAnsweredQuestions] = useState(0);
   const [questions, setQuestions] = useState([]);
   const [testStarted, setTestStarted] = useState(false);
+  const [hasTestStartedAtLeastOnce, setHasTestStartedAtLeastOnce] =
+    useState(false); // Ny tillståndsvariabel
 
   useEffect(() => {
-    // Kontrollera om testet är igång och antingen tiden är slut eller alla frågor har besvarats.
-    if (
+    let timer;
+    if (testStarted && remainingTime > 0) {
+      timer = setInterval(() => {
+        setRemainingTime((prevTime) => prevTime - 1);
+      }, 1000);
+    } else if (
       testStarted &&
-      (remainingTime === 0 || answeredQuestions === questions.length)
+      (remainingTime === 0 || answeredQuestions >= questions.length) &&
+      hasTestStartedAtLeastOnce
     ) {
-      setTestStarted(false); // Stoppa testet.
-
-      // Säkerställ att detta bara körs om testet faktiskt har startat och frågor har besvarats.
-      if (answeredQuestions > 0) {
-        alert(`Testet är över! Du fick ${result} av ${questions.length} rätt.`);
-      }
+      setTestStarted(false);
+      clearInterval(timer);
+      alert(`Testet är över! Du fick ${result} av ${questions.length} rätt.`);
     }
-  }, [testStarted, remainingTime, answeredQuestions, questions.length, result]);
-
-  const handleTimeSelection = (minutes) => {
-    const questionsPerMinute = { 5: 30, 10: 60, 15: 90, 20: 120 };
-    const numQuestions = questionsPerMinute[minutes];
-    setTestLength(minutes);
-    setRemainingTime(minutes * 60);
-    setQuestions(generateQuestions(numQuestions));
-    setCurrentQuestion({});
-    setResult(0);
-    setAnsweredQuestions(0);
-    setUserAnswer("");
-  };
-
-  const startTest = () => {
-    setTestStarted(true);
-    if (!questions.length) {
-      setQuestions(generateQuestions(testLength * 6));
-    }
-    moveToNextQuestion();
-  };
+    return () => clearInterval(timer);
+  }, [
+    testStarted,
+    remainingTime,
+    answeredQuestions,
+    questions.length,
+    result,
+    testLength,
+  ]);
 
   const moveToNextQuestion = () => {
-    if (questions.length > 0 && answeredQuestions < questions.length) {
+    if (answeredQuestions < questions.length - 1) {
       setCurrentQuestion(questions[answeredQuestions]);
+    } else {
+      // Alla frågor har besvarats; visa resultatet och stoppa testet.
+      setTestStarted(false);
+      alert(
+        `Grattis! Du har slutfört alla frågor och fick ${result} av ${questions.length} rätt.`
+      );
     }
   };
 
@@ -74,7 +73,42 @@ function App() {
     }
     setAnsweredQuestions(answeredQuestions + 1);
     setUserAnswer("");
-    moveToNextQuestion();
+    if (answeredQuestions < questions.length - 1) {
+      moveToNextQuestion();
+    } else {
+      setTestStarted(false);
+      alert(
+        `Grattis! Du har slutfört alla frågor och fick ${result} av ${questions.length} rätt.`
+      );
+    }
+  };
+
+  const handleTimeSelection = (minutes) => {
+    setTestLength(minutes);
+    setRemainingTime(minutes * 60);
+    setQuestions(generateQuestions(minutes * 6)); // Antag att du genererar frågor baserat på tid
+    setCurrentQuestion({});
+    setResult(0);
+    setAnsweredQuestions(0);
+    setUserAnswer("");
+    // Ingen ytterligare ändring behövs här; `testLength`-tillståndet används redan för att spåra det valda alternativet
+  };
+
+  const startTest = () => {
+    if (testLength) {
+      // Kontrollera att testLength inte är null
+      setTestStarted(true);
+      setRemainingTime(testLength * 60);
+      if (!questions.length) {
+        setQuestions(generateQuestions(testLength * 6)); // Eller anpassa antalet frågor baserat på testLength
+      }
+      moveToNextQuestion();
+      setHasTestStartedAtLeastOnce(true);
+    }
+  };
+
+  const clearAnswer = () => {
+    setUserAnswer("");
   };
 
   const handleAnswerClick = (number) => {
@@ -101,8 +135,40 @@ function App() {
     fontSize: "20px",
   };
 
+  const selectedButtonStyle = {
+    ...buttonStyle, // Behåll den grundläggande knappstilen
+    borderColor: "#4CAF50", // Grön ram
+    backgroundColor: "#A5D6A7", // Ljusgrön bakgrund
+    borderWidth: "2px",
+    borderStyle: "solid",
+  };
+
+  const renderNumberButtons = () => {
+    const layout = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [0]];
+    return layout.map((row, index) => (
+      <div key={index}>
+        {row.map((number) => (
+          <button
+            key={number}
+            style={buttonStyle}
+            onClick={() => handleAnswerClick(number)}
+          >
+            {number}
+          </button>
+        ))}
+      </div>
+    ));
+  };
+
   return (
-    <div>
+    <div className="App">
+      <div className="header">
+        {testStarted && (
+          <button style={buttonStyle} onClick={resetTest}>
+            Starta om
+          </button>
+        )}
+      </div>
       <h1>Matteapp</h1>
       {!testStarted ? (
         <div>
@@ -110,7 +176,11 @@ function App() {
           {[5, 10, 15, 20].map((minutes) => (
             <button
               key={minutes}
-              style={buttonStyle}
+              style={
+                minutes === testLength
+                  ? { ...buttonStyle, ...selectedButtonStyle }
+                  : buttonStyle
+              }
               onClick={() => handleTimeSelection(minutes)}
             >
               {minutes} minuter
@@ -134,15 +204,10 @@ function App() {
             {currentQuestion.factor1} * {currentQuestion.factor2}
           </div>
           <p>Svar: {userAnswer}</p>
-          {[...Array(10).keys()].map((number) => (
-            <button
-              key={number}
-              style={buttonStyle}
-              onClick={() => handleAnswerClick(number)}
-            >
-              {number}
-            </button>
-          ))}
+          {renderNumberButtons()}
+          <button style={buttonStyle} onClick={() => setUserAnswer("")}>
+            Rensa
+          </button>
           <button style={buttonStyle} onClick={nextQuestion}>
             Nästa fråga
           </button>
